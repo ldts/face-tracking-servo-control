@@ -1,6 +1,8 @@
 # servo-udp
 
 Sends duty cycle to xenomai's gpiopwm demo code (when demo code run in udp mode)
+http://git.xenomai.org/xenomai-jro.git/log/?h=next-devel
+
 Use the cursor keys to control up to two servo motors in a remote platform
 
 up/down     : increments/decrements duty cycle of servo[0]
