@@ -24,6 +24,7 @@ struct {
 } server[MAX_SERVERS];
 
 int servers;
+int step;
 
 
 void error(char *msg)
@@ -45,6 +46,7 @@ static inline void print_config(void)
 	int i;
 
 	printf("Use the UP/DOWN cursor keys to move servo \n");
+	printf("Step %d:\n ", step);
 	for (i = 0; i < servers ; i++) {
 		printf("Server %d:\n", i);
 		printf(" ip	    : %s\n", server[i].hostname);
@@ -99,11 +101,11 @@ static void process(int sockfd)
 	switch(c) {
 	case 'A':
 	case 'C':
-		duty = duty < MAX_DUTY ? duty + 1 : duty;
+		duty = duty + step <= MAX_DUTY ? duty + step : MAX_DUTY;
 		break;
 	case 'B':
 	case 'D':
-		duty = duty > MIN_DUTY ? duty - 1 : duty;
+		duty = duty - step >= MIN_DUTY ? duty - step : MIN_DUTY;
 		break;
 	default:
 		return;
@@ -125,8 +127,8 @@ int main(int argc, char **argv)
 	int sockfd;
 	int i;
 
-	if (argc != 3 && argc != 5) {
-		fprintf(stderr,"usage: %s <hostname> <port> (err: argc=%d)\n", argv[0], argc);
+	if (argc != 4 && argc != 6) {
+		fprintf(stderr,"usage: %s <step> <hostname> <port> (err: argc=%d)\n", argv[0], argc);
 		return -1;
 	}
 
@@ -134,11 +136,13 @@ int main(int argc, char **argv)
 	if (sockfd < 0)
 		error("ERROR opening socket");
 
-	servers = argc == 5 ? 2 : 1;
+	servers = argc == 6 ? 2 : 1;
+
+	step = atoi(argv[1]);
 
 	for (i = 0; i < servers; i++ ) {
-		server[i].hostname = argv[1 + i * MAX_SERVERS];
-		server[i].port = atoi(argv[2 + i * MAX_SERVERS]);
+		server[i].hostname = argv[2 + i * MAX_SERVERS];
+		server[i].port = atoi(argv[3 + i * MAX_SERVERS]);
 		server[i].host = gethostbyname(server[i].hostname);
 		if (server[i].host == NULL) {
 			fprintf(stderr, "ERROR, no such host as %s\n", server[i].hostname);
