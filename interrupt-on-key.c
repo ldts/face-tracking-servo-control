@@ -1,6 +1,6 @@
 #include <sys/select.h>
 #include <stdio.h>
- #define STDIN 0
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,41 +14,34 @@
 #include <fcntl.h>
 
 
-atexit()
+#define STDIN 0
 
 int main()
- {
+{
 	struct termios oldt, newt;
 	char c;
 
 	fd_set fds;
-    	int maxfd = 0;
+	int maxfd = 0;
 
-    while(1){
+	while (1) {
 
-        FD_ZERO(&fds);
-        FD_SET(sd, &fds); 
-        FD_SET(STDIN, &fds); 
+		FD_ZERO(&fds);
+		FD_SET(STDIN, &fds);
 
-	tcgetattr(STDIN_FILENO, &oldt);
-	newt = oldt;
-	newt.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-//	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-//	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+		tcgetattr(STDIN_FILENO, &oldt);
+		newt = oldt;
+		newt.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
-        select(maxfd+1, &fds, NULL, NULL, NULL); 
-	//ch = getchar();
+		select(maxfd+1, &fds, NULL, NULL, NULL);
 
-	//tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-	//fcntl(STDIN_FILENO, F_SETFL, oldf);
+		read(STDIN, &c, 1);
+		printf("0x%x\n", c);
 
-	read(0, &c, 1);
-	printf("%c\n", c);
 
-	
-        }
+	}
 
 	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
 
-	}
+}
