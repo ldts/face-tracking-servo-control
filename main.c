@@ -10,6 +10,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#define STD_IN		0
+
 #define MAX_SERVERS	2
 #define BUFSIZE		1024
 #define MAX_DUTY	100
@@ -25,7 +27,6 @@ struct {
 
 int servers;
 int step;
-
 
 void error(char *msg)
 {
@@ -55,31 +56,43 @@ static inline void print_config(void)
 	}
 }
 
-int kbhit(void)
+char kbhit_irq(void)
 {
 	struct termios oldt, newt;
-	int ch;
-	int oldf;
+	int maxfd = 0;
+	fd_set fds;
+	char c[3];
 
-	tcgetattr(STDIN_FILENO, &oldt);
-	newt = oldt;
-	newt.c_lflag &= ~(ICANON | ECHO);
-	tcsetattr(STDIN_FILENO, TCSANOW, &newt);
-	oldf = fcntl(STDIN_FILENO, F_GETFL, 0);
-	fcntl(STDIN_FILENO, F_SETFL, oldf | O_NONBLOCK);
+	for(;;) {
 
-	ch = getchar();
+		FD_ZERO(&fds);
+		FD_SET(STD_IN, &fds);
 
-	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
-	fcntl(STDIN_FILENO, F_SETFL, oldf);
+		tcgetattr(STDIN_FILENO, &oldt);
+		newt = oldt;
+		newt.c_lflag &= ~(ICANON | ECHO);
+		tcsetattr(STDIN_FILENO, TCSANOW, &newt);
 
-	if (ch != EOF) {
-		/* arrow/cursor keys use three characters - only the last one matters  */
-		getchar();
-		return 1;
+		select(maxfd + 1, &fds, NULL, NULL, NULL);
+		read(STD_IN, &c, 3);
+
+		if (c[0] == 0x1b && c[1] == 0x5b) {
+			switch(c[2]) {
+			case 'A':
+			case 'B':
+				goto done;
+			case 'C':
+			case 'D':
+				if (servers > 1)
+					goto done;
+			}
+		}
 	}
 
-	return 0;
+done:
+	tcsetattr(STDIN_FILENO, TCSANOW, &oldt);
+
+	return c[2];
 }
 
 static void process(int sockfd)
@@ -92,7 +105,7 @@ static void process(int sockfd)
 
 	bzero(buf, BUFSIZE);
 
-	c = getchar();
+	c = kbhit_irq();
 	if (c == 'C' || c == 'D')
 		id = 1;
 
@@ -158,8 +171,6 @@ int main(int argc, char **argv)
 	for (;;) {
 		clear_screen();
 		print_config();
-		while (!kbhit())
-			usleep(10);
 		process(sockfd);
 	}
 
