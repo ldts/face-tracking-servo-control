@@ -1,6 +1,6 @@
 # servo-udp
 
-This application sends duty cycle to Xenomai's [gpiopwm demo](https://source.denx.de/Xenomai/xenomai/-/blob/master/demo/posix/cobalt/gpiopwm.c) code (when the demo code runs in udp mode)
+This application sends duty cycle to Xenomai's [gpiopwm demo](https://source.denx.de/Xenomai/xenomai/-/blob/master/demo/posix/cobalt/gpiopwm.c) code (when the demo code runs in udp mode). This code requires the [gpiopwm driver](https://source.denx.de/Xenomai/xenomai/-/blob/master/kernel/drivers/gpiopwm/gpiopwm.c) in order to execute.
 
 Use the cursor keys to control up to two servo motors in a remote platform
 ```
